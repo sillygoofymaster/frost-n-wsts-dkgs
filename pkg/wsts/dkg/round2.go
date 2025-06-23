@@ -2,7 +2,7 @@ package dkg
 
 import (
 	"fmt"
-	//"slices"
+	"slices"
 
 	"github.com/sillygoofymaster/wstsinator/pkg/helpers/commitment"
 	"github.com/sillygoofymaster/wstsinator/pkg/helpers/secp256k1"
@@ -30,6 +30,7 @@ func (round *Round2) Generate() []packages.Packable {
 			result = append(result, pkg)
 		}
 	}
+	round.Session.Polynomial = nil
 
 	return result
 }
@@ -41,6 +42,9 @@ func (round *Round2) ProcessAndVerify(pkgs []packages.Packable) (packages.Packab
 	}
 
 	sharemp := make(map[uint32]map[uint32]*secp256k1.Scalar, n)
+	for _, i := range round.Session.SelfId.KeyIds {
+		sharemp[i] = make(map[uint32]*secp256k1.Scalar)
+	}
 
 	secshare := round.Session.Secret
 
@@ -52,13 +56,11 @@ func (round *Round2) ProcessAndVerify(pkgs []packages.Packable) (packages.Packab
 			return nil, fmt.Errorf("wrong package type passed")
 		}
 
-		if round2prepPkg.Base.To == nil || round2prepPkg.Base.To.PartyId != round.Session.SelfId.OwnId || round2prepPkg.Base.From == round.Session.SelfId.OwnId {
+		keyBelongsTpParty := slices.Contains(round.Session.SelfId.KeyIds, round2prepPkg.Base.To.KeyId)
+		if round2prepPkg.Base.To == nil || round2prepPkg.Base.To.PartyId != round.Session.SelfId.OwnId || round2prepPkg.Base.From == round.Session.SelfId.OwnId || !keyBelongsTpParty {
 			return nil, fmt.Errorf("wrong addressee")
 		}
 
-		if _, ok := sharemp[round2prepPkg.Base.To.KeyId]; !ok {
-			sharemp[round2prepPkg.Base.To.KeyId] = make(map[uint32]*secp256k1.Scalar)
-		}
 		sharemp[round2prepPkg.Base.To.KeyId][round2prepPkg.Base.From] = round2prepPkg.Share
 
 		secshare[pkg.GetBase().To.KeyId].Add(round2prepPkg.Share)
@@ -74,7 +76,7 @@ func (round *Round2) ProcessAndVerify(pkgs []packages.Packable) (packages.Packab
 			if err != nil {
 				return nil, fmt.Errorf("dkg failed: %s", err)
 			}
-			panic("dkg failed and the faulty party was not identified")
+			return nil, fmt.Errorf("dkg failed and the faulty party was not identified")
 		}
 	}
 	groupPublicKey := round.Session.CommSum.Components[0]

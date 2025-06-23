@@ -19,7 +19,7 @@ func collectPackages(self uint32, pkgs []packages.Packable) []packages.Packable 
 
 		// to initiate investigation
 		round2pkg, ok := pkg.(*packages.Round2Package)
-		if ok && base.From == 2 && base.To.PartyId == 3 && base.To.KeyId == 6 {
+		if ok && base.From == 3 && base.To.PartyId == 2 && base.To.KeyId == 5 {
 			round2pkg.Share = secp256k1.GetRandomScalar()
 			pkgs[i] = round2pkg
 		}

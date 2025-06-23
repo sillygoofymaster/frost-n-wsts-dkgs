@@ -19,7 +19,12 @@ func CreateCommitmentVector(polynomial *Polynomial) *CommitmentVector {
 }
 
 func AddTwoVectors(A *CommitmentVector, B *CommitmentVector) *CommitmentVector {
-	result := make([]*secp256k1.AffinePoint, len(A.Components))
+	n := len(A.Components)
+	if n != len(B.Components) {
+		panic("vector addition invoked with mismatched slice lengths")
+	}
+
+	result := make([]*secp256k1.AffinePoint, n)
 	for i := range A.Components {
 		result[i] = secp256k1.AddTwoPoints(A.Components[i], B.Components[i])
 	}

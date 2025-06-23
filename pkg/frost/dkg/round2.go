@@ -68,7 +68,7 @@ func (round *Round2) ProcessAndVerify(pkgs []packages.Packable) (packages.Packab
 		if err != nil {
 			return nil, fmt.Errorf("dkg failed: %s", err)
 		}
-		panic("dkg failed and the faulty party was not identified")
+		return nil, fmt.Errorf("dkg failed and the faulty party was not identified")
 	}
 	groupPublicKey := round.Session.CommSum.Components[0]
 
